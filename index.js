@@ -6,10 +6,10 @@ const mysql = require("mysql");
 const url = require("url");
 
 // WiiU games infos folder path
-const dirPath = path.join("/var/www/ghosteshop.com/cdn/db/wiiu/languages");
+const dirPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/titles/languages");
 const gamesWebUrl = "https://cdn.ghosteshop.com/Nintendo WiiU/EUR";
-const gamePath = path.join("/var/www/ghosteshop.com/cdn/Nintendo WiiU/EUR");
-const videosPath = path.join("/var/www/ghosteshop.com/cdn/db/videos_wiiu");
+const gamePath = path.join("/var/www/ghosteshop/cdn/Nintendo WiiU/EUR");
+const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
 
 // Connect to MySQL
 var connection = mysql.createConnection({
@@ -79,15 +79,15 @@ connection.connect(async function (err) {
           ? gameInfoJson.eshop.title.star_rating_info.score._text
           : undefined;
         gameinfo.assetsURL = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/languages/" +
+          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
             path.join(language, game)
         ).href;
         gameinfo.icon = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/languages/" +
+          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
             path.join(language, game, "ressources/icon.png")
         ).href;
         gameinfo.banner = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/languages/" +
+          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
             path.join(language, game, "ressources/banner.png")
         ).href;
 
@@ -100,7 +100,7 @@ connection.connect(async function (err) {
         screens.forEach((screen) => {
           screensURL.push(
             url.parse(
-              "https://cdn.ghosteshop.com/db/wiiu/languages/" +
+              "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
                 path.join(language, game, "ressources", "screenshots", screen)
             ).href
           );
@@ -122,7 +122,7 @@ connection.connect(async function (err) {
         gameFileURL.push({
           name: file,
           url: url.parse(gamesWebUrl + "/" + path.join(file)).href,
-          size: gameSize.toFixed(2) + "MB",
+          size: gameSize.toFixed(2) + "MiB",
         });
       }
     });
@@ -141,7 +141,7 @@ connection.connect(async function (err) {
           videoFileURL.push({
             name: video,
             url: url.parse(
-              "https://cdn.ghosteshop.com/db/videos_wiiu/" +
+              "https://cdn.ghosteshop.com/db/wiiu/videos/" +
                 path.join(file, video)
             ).href,
           });

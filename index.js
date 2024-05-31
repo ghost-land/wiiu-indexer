@@ -2,28 +2,16 @@ require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const convert = require("xml-js");
-const mysql = require("mysql");
 const url = require("url");
 
 // WiiU games infos folder path
-const dirPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/titles/languages");
+const dirPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/titles/languages/");
 const gamesWebUrl = "https://cdn.ghosteshop.com/Nintendo WiiU/EUR";
 const gamePath = path.join("/var/www/ghosteshop/cdn/Nintendo WiiU/EUR");
 const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
 
-// Connect to MySQL
-var connection = mysql.createConnection({
-  host: "localhost",
-  user: "indexer",
-  password: process.env.MYSQL_PASSWORD,
-  database: "WiiU_Games",
-});
-
-connection.connect(async function (err) {
+(async() => {
   var gameInfosDB = {};
-
-  if (err) throw err;
-  console.log("---\nConnected to MYSQL database !\n---");
 
   // List folders for game infos indexing
   const files = await fs.promises.readdir(dirPath);
@@ -84,16 +72,16 @@ connection.connect(async function (err) {
         ).href;
         gameinfo.icon = url.parse(
           "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-            path.join(language, game, "ressources/icon.png")
+            path.join(language, game, "ressources/icon.jpg")
         ).href;
         gameinfo.banner = url.parse(
           "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-            path.join(language, game, "ressources/banner.png")
+            path.join(language, game, "ressources/banner.jpg")
         ).href;
 
         const screens = await fs.promises
           .readdir(
-            path.join(dirPath, language, game, "ressources", "screenshots")
+            path.join(dirPath, language, game, "screenshots")
           )
           .catch(() => []);
         const screensURL = [];
@@ -101,7 +89,7 @@ connection.connect(async function (err) {
           screensURL.push(
             url.parse(
               "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-                path.join(language, game, "ressources", "screenshots", screen)
+                path.join(language, game, "screenshots", screen)
             ).href
           );
         });
@@ -122,7 +110,7 @@ connection.connect(async function (err) {
         gameFileURL.push({
           name: file,
           url: url.parse(gamesWebUrl + "/" + path.join(file)).href,
-          size: gameSize.toFixed(2) + "MiB",
+          size: gameSize.toFixed(2) + "MB",
         });
       }
     });
@@ -157,4 +145,4 @@ connection.connect(async function (err) {
     console.log("Data saved !");
     process.exit();
   });
-});
+})()

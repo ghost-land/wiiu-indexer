@@ -10,7 +10,7 @@ const gamesWebUrl = "https://cdn.ghosteshop.com/Nintendo WiiU/EUR";
 const gamePath = path.join("/var/www/ghosteshop/cdn/Nintendo WiiU/EUR");
 const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
 
-(async() => {
+(async () => {
   var gameInfosDB = {};
 
   // List folders for game infos indexing
@@ -20,7 +20,7 @@ const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
   )) {
     const games = await fs.promises.readdir(path.join(dirPath, language));
     if (games.length < 100) {
-      console.log(`Not enough games in ${language} folder !`);
+      console.log(`Not enough games in ${language} folder!`);
       continue;
     }
     console.log(`Indexing ${games.length} games in ${language}`);
@@ -28,73 +28,79 @@ const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
     if (language == "en") {
       for await (const game of games) {
         let gameinfo = {};
-        const gameInfo = await fs.promises.readFile(
-          path.join(dirPath, language, game, "game_info.xml"),
-          "utf8"
-        );
-        const gameInfoJson = await convert.xml2js(gameInfo, {
-          compact: true,
-          spaces: 4,
-        });
+        const filePath = path.join(dirPath, language, game, "game_info.xml");
+        try {
+          console.log(`Processing file: ${filePath}`);
+          const gameInfo = await fs.promises.readFile(filePath, "utf8");
+          let gameInfoJson;
+          
+          try {
+            gameInfoJson = await convert.xml2js(gameInfo, {
+              compact: true,
+              spaces: 4,
+            });
+          } catch (parseErr) {
+            console.error(`Parsing error in file: ${filePath}`, parseErr);
+            continue;
+          }
 
-        gameinfo.product_code = gameInfoJson.eshop.title.product_code
-          ? gameInfoJson.eshop.title.product_code._text
-          : undefined;
-        gameinfo.name = gameInfoJson.eshop.title.name
-          ? gameInfoJson.eshop.title.name._text
-          : undefined;
-        gameinfo.publisher = gameInfoJson.eshop.title.publisher.name
-          ? gameInfoJson.eshop.title.publisher.name._text
-          : undefined;
-        gameinfo.genre = gameInfoJson.eshop.title.display_genre
-          ? gameInfoJson.eshop.title.display_genre._text
-          : undefined;
-        gameinfo.description = gameInfoJson.eshop.title.description
-          ? gameInfoJson.eshop.title.description._text
-              .replace("<br>", "")
-              .replace("<br><br>", "")
-          : undefined;
-        gameinfo.short_description = gameInfoJson.eshop.title.description
-          ? gameInfoJson.eshop.title.description._text
-              .substring(0, 125)
-              .replace("<br><br>", "")
-              .replace("<br>", "") + "..."
-          : undefined;
-        gameinfo.release_date = gameInfoJson.eshop.title.release_date_on_eshop
-          ? gameInfoJson.eshop.title.release_date_on_eshop._text
-          : undefined;
-        gameinfo.score = gameInfoJson.eshop.title.star_rating_info
-          ? gameInfoJson.eshop.title.star_rating_info.score._text
-          : undefined;
-        gameinfo.assetsURL = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-            path.join(language, game)
-        ).href;
-        gameinfo.icon = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-            path.join(language, game, "ressources/icon.jpg")
-        ).href;
-        gameinfo.banner = url.parse(
-          "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-            path.join(language, game, "ressources/banner.jpg")
-        ).href;
+          gameinfo.product_code = gameInfoJson.eshop.title.product_code
+            ? gameInfoJson.eshop.title.product_code._text
+            : undefined;
+          gameinfo.name = gameInfoJson.eshop.title.name
+            ? gameInfoJson.eshop.title.name._text
+            : undefined;
+          gameinfo.publisher = gameInfoJson.eshop.title.publisher.name
+            ? gameInfoJson.eshop.title.publisher.name._text
+            : undefined;
+          gameinfo.genre = gameInfoJson.eshop.title.display_genre
+            ? gameInfoJson.eshop.title.display_genre._text
+            : undefined;
+          gameinfo.description = gameInfoJson.eshop.title.description
+            ? gameInfoJson.eshop.title.description._text
+                .replace(/<br\s*\/?>/gi, "")
+            : undefined;
+          gameinfo.short_description = gameInfoJson.eshop.title.description
+            ? gameInfoJson.eshop.title.description._text
+                .substring(0, 125)
+                .replace(/<br\s*\/?>/gi, "") + "..."
+            : undefined;
+          gameinfo.release_date = gameInfoJson.eshop.title.release_date_on_eshop
+            ? gameInfoJson.eshop.title.release_date_on_eshop._text
+            : undefined;
+          gameinfo.score = gameInfoJson.eshop.title.star_rating_info
+            ? gameInfoJson.eshop.title.star_rating_info.score._text
+            : undefined;
+          gameinfo.assetsURL = url.parse(
+            "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
+              path.join(language, game)
+          ).href;
+          gameinfo.icon = url.parse(
+            "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
+              path.join(language, game, "ressources/icon.jpg")
+          ).href;
+          gameinfo.banner = url.parse(
+            "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
+              path.join(language, game, "ressources/banner.jpg")
+          ).href;
 
-        const screens = await fs.promises
-          .readdir(
-            path.join(dirPath, language, game, "screenshots")
-          )
-          .catch(() => []);
-        const screensURL = [];
-        screens.forEach((screen) => {
-          screensURL.push(
-            url.parse(
-              "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-                path.join(language, game, "screenshots", screen)
-            ).href
-          );
-        });
-        gameinfo.screenshots = screensURL;
-        gameInfos.push(gameinfo);
+          const screens = await fs.promises
+            .readdir(path.join(dirPath, language, game, "screenshots"))
+            .catch(() => []);
+          const screensURL = [];
+          screens.forEach((screen) => {
+            screensURL.push(
+              url.parse(
+                "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
+                  path.join(language, game, "screenshots", screen)
+              ).href
+            );
+          });
+          gameinfo.screenshots = screensURL;
+          gameInfos.push(gameinfo);
+        } catch (err) {
+          console.error(`Error processing file: ${filePath}`, err);
+        }
       }
       gameInfosDB[language] = gameInfos;
     }
@@ -140,9 +146,9 @@ const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
       gameInfosDB["en"][index].videos = videoFileURL;
     }
   });
-  await fs.writeFile("data.json", JSON.stringify(gameInfosDB), (err) => {
+  await fs.promises.writeFile("data.json", JSON.stringify(gameInfosDB), (err) => {
     if (err) throw err;
-    console.log("Data saved !");
+    console.log("Data saved!");
     process.exit();
   });
-})()
+})();

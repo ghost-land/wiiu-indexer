@@ -6,8 +6,8 @@ const url = require("url");
 
 // WiiU games infos folder path
 const dirPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/titles/languages/");
-const gamesWebUrl = "https://cdn.ghosteshop.com/Nintendo WiiU/EUR";
-const gamePath = path.join("/var/www/ghosteshop/cdn/Nintendo WiiU/EUR");
+const gamesWebUrl = "https://cdn.ghosteshop.com/Nintendo WiiU";
+const gamePath = path.join("/var/www/ghosteshop/cdn/Nintendo WiiU");
 const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
 
 (async () => {
@@ -75,10 +75,24 @@ const videosPath = path.join("/var/www/ghosteshop/cdn/db/wiiu/videos");
             "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
               path.join(language, game)
           ).href;
-          gameinfo.icon = url.parse(
-            "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
-              path.join(language, game, "ressources/icon.jpg")
-          ).href;
+          
+          const iconDirPath = path.join(dirPath, language, game, 'ressources');
+          const iconFiles = await fs.promises.readdir(iconDirPath);
+          let iconFileName;
+          iconFiles.some(file => {
+            // Vérifie si le fichier commence par "icon" et est une image
+            if (file.toLowerCase().startsWith('icon') && /\.(png|jpe?g|gif)$/i.test(file)) {
+              iconFileName = file;
+              return true; // Arrête la boucle dès qu'une image est trouvée
+            }
+          });
+          if (iconFileName) {
+            gameinfo.icon = url.parse(
+              "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
+                path.join(language, game, "ressources", iconFileName)
+            ).href;
+          }
+
           gameinfo.banner = url.parse(
             "https://cdn.ghosteshop.com/db/wiiu/titles/languages/" +
               path.join(language, game, "ressources/banner.jpg")

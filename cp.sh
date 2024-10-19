@@ -1,3 +1,3 @@
 yarn start
 
-cp data.json /var/www/ghosteshop.com/httpdocs/wiiuDB.json
+cp data.json /var/www/domain/httpdocs/wiiuDB.json
